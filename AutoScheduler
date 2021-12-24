@@ -1,0 +1,204 @@
+//  This autoSchedule function serves to pull suggested interviewers from the ILB when conditions for the interviewer: "cost center" and "focus areas'' are both filled ("level" is always filled). How this works is it compares the target level, cost center, and focus areas from the RC Frontend to the Waymo RC ILB, and comes up with a list of interviewers that match the standardized requests from RC Frontend. It then outputs a list of levels, because sometimes you have multiple levels for each request, as well as multiple cost centers. It outputs the level, cost center, and every focus area the interviewer matches with. This is to assist the RC in choosing interviews quickly after being able to see interview dates that are blocked off. These dates pull from columns 14 to 28 and reference the values in the date cells. This will also include the "Scheduled Today" cells because those are being imported into the regular date cells. I have also included a clearContents function that will be called every time the sheet is auto-archived to prevent rows from overwriting each other. The function runs on auto-trigger every time there is a change to the document. If the function fails to run, it will output "none" and “N/A" to the fields.
+// This function first loops through the SWE Google Form Tracker (RC Frontend), and creates a list of requests that have the required matching criteria. It creates a list of request matching criteria and corresponding rows. It then loops through that list of matchable interviews, pulls the cost centers, and loops through the list of cost centers because there may be more than one cost center per candidate.  It loops through the cost centers, then it loops through the ILB and finds interviewers with matching cost centers and levels. It then pulls their focus areas and creates a list of focus areas for each interviewer.
+
+
+// Total of six for loops that nest to a maximum of four for loops.
+
+
+function autoSchedule() {
+
+  // Load appropriate google sheets
+  var targetSSheet = SpreadsheetApp.openById('1Kl5OAH1qlq0fuWS5pSmgBZlsq_ROmOB0ChiETk70Njo') // initially named this target sheet because I built it on a different sheet. I still want to use that target sheet but for auto-trigger purposes, the code needed to be attached to the RC frontend.
+  var targetSheet = targetSSheet.getSheetByName("AutoScheduleData")
+  var ss1 = SpreadsheetApp.openById('1RWGtppSAN_iulToHC0DDGIjilTKPqtgZSNoHIL8mWZE') // SWE RC frontend spreadsheet
+  var requestSheet = ss1.getSheetByName("Sophie") 
+  var ss2 = SpreadsheetApp.openById('15ZyMhCU2YLAzWeqaTx5l8JIdUwZ9oarTjcKwj-x9gew') // Waymo RC SWE ILB
+  var ilbSheet = ss2.getSheetByName("2021 Load Balancer") // load balancer sheet with interviewers
+  Logger.log("Sheets loaded.")
+
+  // Clear old data to make room for current data
+  targetSheet.clearContents();
+
+  // Get Sheet Dimensions
+  var requestNumRows = 500;
+  var requestLastColumn = requestSheet.getLastColumn();
+  var ilbNumRows = ilbSheet.getLastRow();
+  var ilbLastColumn = ilbSheet.getLastColumn();
+
+  // Pull data from SWE RC Frontend (request sheet) and Waymo SWE RC ILB (interview load balancer)
+  var requestData = requestSheet.getRange(4, 1, requestNumRows - 4, requestLastColumn).getValues()
+  var ilbData = ilbSheet.getRange(4, 1, ilbNumRows - 4, ilbLastColumn).getValues()
+  var dateILBList = ilbSheet.getRange(3,14,1,28).getValues()
+  Logger.log("Data pulled.")
+
+
+  // get number of rows in each sheet's data for our for loops
+  var requestL = requestData.length
+  var ilbL = ilbData.length
+
+  // initialize array data to push to new sheet (target sheet - "Test Autoschedule Sheet")
+  var requestFocusList = []
+  var requestCostCenterList = []
+  var requestHiringManagerList = []
+  var requestLevelList = [];
+  var requestNotesList = [];
+  var requestCandList = [];
+  var rowList = [];
+
+  // Write header to target sheet - "Test Autoschedule Sheet"
+  var range = targetSheet.getRange(1,1,1,12)
+  var header = [["Candidate Name", "Hiring Manager", "Request Notes", "Request Cost Center", "Request Focus Areas", "Request Levels", "Interviewers", "Interviewer LDAPs", "Interviewer Cost Centers", "Interviewer Levels", "Interviewer Focus Areas", "Scheduled Interviews"]]
+  range.setValues(header) //prints to header
+
+  // loop through rows of SWE RC Frontend sheet to find request info
+  for (i=0; i < requestL; i++) {
+    // pull request info if focus area AND cost center columns are filled out
+    if(requestData[i][21].length >= 1 && requestData[i][20].length >= 1){
+      requestFocusList.push(requestData[i][21]) //.push appends to list
+      requestCostCenterList.push(requestData[i][20])
+      requestHiringManagerList.push(requestData[i][16])
+      requestLevelList.push(requestData[i][14])
+      requestNotesList.push(requestData[i][15])
+      requestCandList.push(requestData[i][12])
+      rowList.push(4+i) // creates list of rows that have necessary info for matching so we can write data in the right spot
+    }
+  }
+  
+
+  // Get length of usable request list for matching for loop. It would slow the program down to loop through every row so let's just loop through rows that have info
+  aSL = requestFocusList.length // number of entries on SWE RC Frontend that have BOTH cost center AND focus areas columns filled out
+
+  Logger.log("Usable request info gathered. Finding matches.")
+
+  // clear auto schedule content from form to ensure compatibility with auto archive. Only in case of auto archive
+  var clearRange = requestSheet.getRange(4,23,500,6)
+  clearRange.clearContent()
+
+  // Create for loop to match interview requests with interviewers
+  for (j=0; j < aSL; j++){ // counts through all the usable requests
+
+    //Pull matching criteria for this interview
+    requestFocuses = requestFocusList[j].split(', ')
+    requestCostCenters = requestCostCenterList[j].split(', ')
+    requestLevels = requestLevelList[j].toString().split(', ')
+
+    // intialize lists of interviewers and their information
+    interviewerList = [];
+    interviewerLDAPList = [];
+    interviewerCostCenterList = [];
+    interviewerFocusList = [];
+    interviewerLevelList = [];
+    interviewDatesList = [];
+
+    // loop through all interview request cost centers because ILB has some entries for 'SW Research' so 'SW Research' should match to 'Research' in the husky scheduling google form
+    for (k = 0; k < requestCostCenters.length; k++){
+      requestCostCenter = requestCostCenters[k]
+
+      // loop through ILB to find interviewers in appropriate cost centers
+      for (m=0;m<ilbL;m++){
+
+        // Pull each interviewer's cost center and level
+        iCostCenter = ilbData[m][0]
+        iLevels = ilbData[m][4].toString()
+
+        // Check if cost centers and levels match, if true, add to list of interviewers
+        if(iCostCenter.includes(requestCostCenter) && requestLevels.includes(iLevels)){
+          
+          // Get focus areas from interviewers who passed first check and initialize list of matching focus areas
+          iFocuses = ilbData[m][10].split(' | ')
+          iFocusSubList = []
+
+          // Initialize list of dates where the interviewer in row m is booked
+          iDatesSubList = []
+
+          if(requestFocuses.includes('Coding / Algorithms & Data Structures (Python)')){
+            if(iFocuses.includes('Coding / Algorithms / Data Structures') && iFocuses.includes('Python')){
+              iFocusSubList.push('Coding / Algorithms & Data Structures (Python)')
+            }
+          }
+
+          if(requestFocuses.includes('Coding / Algorithms & Data Structures (C++)')){
+            if(iFocuses.includes('Coding / Algorithms / Data Structures') && iFocuses.includes('C++')){
+              iFocusSubList.push('Coding / Algorithms & Data Structures (C++)')
+            }
+          }
+
+
+          // Check if possible interviewers have any of the right focus areas and output list of matches
+          for(n=0; n<requestFocuses.length; n++){
+            //Logger.log(iFocuses)
+            //Logger.log(requestFocuses[n])
+            if(iFocuses.includes(requestFocuses[n])){
+              iFocusSubList.push(requestFocuses[n])
+            }
+            
+          }
+
+          // Join list of focus areas for this interviewer into a string with delimiter |
+          iFocus = iFocusSubList.join(' | ')
+
+          // check if interviewer and candidate have matching focus areas
+          if(iFocus.length > 1){
+
+            // if there are matching focus areas, we add info to list of suitable interviewers
+            interviewerList.push(ilbData[m][1])
+            interviewerLDAPList.push(ilbData[m][2])
+            interviewerCostCenterList.push(ilbData[m][0])
+            interviewerFocusList.push(iFocus)
+            interviewerLevelList.push(ilbData[m][4])
+
+            // Loop through colums 14 to 41 in ILB header (interview dates)
+            for(o=13;o<41;o++){
+
+              // If interviewer in row m has an interview listed in column o, add the correspoding date from the header to a list
+              if(ilbData[m][o]){
+                iDatesSubList.push(Utilities.formatDate(dateILBList[0][o-13], "GMT-8:00", "MM/dd/yy"))
+              }
+            }
+
+            // join booked interview dates into a string with delimiter ,
+            iDates = iDatesSubList.join(', ')
+
+            // Check if no interviews are booked and set value to none if true
+            if(iDates.length < 1){
+              iDates = 'none'
+            }
+
+            interviewDatesList.push(iDates)
+          }     
+        }
+      }
+
+      // Join lists into single strings with one line per potential interviewer
+      interviewers = interviewerList.join('\n')
+      interviewerLDAPs = interviewerLDAPList.join('\n')
+      interviewerCostCenters = interviewerCostCenterList.join('\n')
+      interviewerFocuses = interviewerFocusList.join('\n')
+      interviewerLevels = interviewerLevelList.join('\n')
+      interviewerDates = interviewDatesList.join('\n')
+
+      // If no interviewers are found, use these values
+      if(interviewers.length < 2){
+        interviewers = "none"
+        interviewerLDAPs = "N/A"
+        interviewerCostCenters = "N/A"
+        interviewerFocuses = "N/A"
+        interviewerLevels = "N/A"
+        interviewerDates = "N/A"
+      }
+    }
+
+    // Write data to additional google sheet for easy viewing
+    // Writes one row for each j (iterating through usable request list)
+    row = j + 3
+    var range = targetSheet.getRange(row,1,1,12)
+    var details = [[requestCandList[j].toString(), requestHiringManagerList[j], requestNotesList[j], requestCostCenterList[j], requestFocusList[j],requestLevelList[j], interviewers, interviewerLDAPs, interviewerCostCenters, interviewerLevels, interviewerFocuses,interviewerDates]]
+    range.setValues(details)
+
+    // Write data to SWE request tracker for quick reference
+    // using rowList, writes to row that contains the request (corresponding to j) that the interviewers match with
+    var range2 = requestSheet.getRange(rowList[j],23,1,6)
+    var details2 = [[interviewers,interviewerLDAPs,interviewerCostCenters,interviewerLevels,interviewerFocuses,interviewerDates]]
+    range2.setValues(details2)
+  }
+}
