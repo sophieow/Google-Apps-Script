@@ -1,0 +1,156 @@
+function export_gcal_to_gsheet(){
+ 
+ 
+ var calList = ['c_cdb6e7e394f84f17695260f694c4834a334a83b579d3a80101ecc0ca0723ad5d@group.calendar.google.com', 'c_kl75fr6nkg9qec0q0p8uts3tjg@group.calendar.google.com', 'c_fku2qvf81as3aeqt640dqm1u8s@group.calendar.google.com', 'c_dt3is24050oqaipvm4kdmrnn18@group.calendar.google.com', 'c_5a7e193b1f0ac6ba0772eb8f97494afb6f2c98c7a80f4e92a357da74c0d93aa2@group.calendar.google.com', 'c_5j7cno4vtqbmuspcrvcikm85p8@group.calendar.google.com'];
+var sheet = SpreadsheetApp.getActiveSheet();
+
+sheet.getRange(1,1,1000,12).clearContent()
+
+
+
+var calIDList = ["Sophie", "Umair", "Hannah", "Megan", "Sharon", "Liz"];
+
+var count = 0
+
+for (var k=0;k<calList.length;k++){
+
+var cal = CalendarApp.getCalendarById(calList[k]);
+var mycal = calIDList[k]
+
+
+var events = cal.getEvents(new Date("December 1, 2021 00:00:00 PST"), new Date("January 1, 2022 23:59:59 PST"), {search: '-project123'});
+
+
+// Create a header record on the current spreadsheet in cells A1:N1 - Match the number of entries in the "header=" to the last parameter
+// of the getRange entry below
+var header = [["SWE Calendar", "Interviewer", "Confirmation Status", "Interview Type", "Candidate", "Focus Areas", "Hiring Manager", "Target Level", "Event Start", "Event End", "Event Creation", "Created By"]]
+var range = sheet.getRange(1,1,1,12);
+range.setValues(header);
+
+
+var b_count = count
+
+Logger.log(count)
+
+// Loop through all calendar events found and write them out starting on calulated ROW 2 (i+2)
+for (var n=b_count;n<b_count + events.length;n++) {
+var row=n+2;
+
+var count = n
+
+var i = n - b_count
+
+var myformula_placeholder = '';
+// Matching the "header=" entry above, this is the detailed row entry "details=", and must match the number of entries of the GetRange entry below
+// NOTE: I've had problems with the getVisibility for some older events not having a value, so I've had do add in some NULL text to make sure it does not error
+
+//define a variable using events[i].getDescription
+// var descrip = events[i].getDescription.split(split into a list of strings at every carriage return)
+// now we select only the lines we want to include using if statements
+// var filterdescrip = '';
+// for i in length(descrip)
+// if first characters in line === ones we want, then we add the line to our filterdescrip variable
+// once that's done, we replace events[i].getDescription in the line below with filterdescrip
+
+var dtext = events[i].getDescription()
+var description = events[i].getDescription().split("\n")
+if (description.length < 2){
+  description = events[i].getDescription().split("<br>")
+}
+var focusArea = ''
+var hiringManager = ''
+var targetLevel = ''
+//if (dtext.includes('Zecheng Wang')){
+//  Logger.log(description)
+//}
+
+for (var j = 0; j<description.length;j++) { 
+  if (description[j].includes('Focus Area:')) {
+    focusArea += description[j].split(':')[1].split("</b>")[0]
+  }
+  if (description[j].includes('Hiring Manager:')) {
+    hiringManager += description[j].split(':')[1]
+  }
+  if (description[j].includes('Target Level:')) { 
+    targetLevel += description[j].split(':')[1].split("<")[0].split("*")[0]
+    //if (targetLevel.includes('L')){
+    //  targetLevel = targetLevel.split("L")[1]
+    //}
+  }
+
+}
+
+
+// made a list of substrings, now going to each element in list of substrings, to find correct item, so need to go thru every element from first to last, which is what j is doing
+
+var intName = events[i].getTitle().split("with")
+if (intName.length < 2){
+  intName = events[i].getTitle().split("for")
+  if (intName.length < 2){
+    intName = events[i].getTitle().split("-")
+  }
+}
+var guestList = events[i].getGuestList(includeOwner = true);
+//Logger.log(guestList[1].getName())
+var guests = []
+var guest = ''
+var guestEmail = [];
+var statuses = [];
+var status = ''
+
+
+if (guestList != null){
+for(var d=0; guestList!=null && d<guestList.length; d++){
+  if(guestList[d].getName!=null){
+  guests = guests.concat([guestList[d].getName()]) 
+  statuses = statuses.concat([guestList[d].getGuestStatus()])
+
+  //if(guestList[d].getEmail!=null){
+  //guestEmail = guestEmail.guestList[d].getEmail()
+ // }
+}
+}
+}
+
+var guest = guests.toString().split('US')[0]
+//Logger.log(guest.indexOf(','))
+if (guest.indexOf(',') === 0){ // removes entry for schedule@greenhouse by checking if first character is comma
+  //Logger.log('splice')
+
+  guest = guest.substring(1) //if string starts with a comma, remove the first character
+  //breaks down if the first entry is a hidden interviewer and not greenhouse. majority of time RC will not remove schedule@greenhouse and add it again, so it will always be index 0
+}
+var guestEmail = guestEmail.toString()
+var status = statuses[1] // if there is 1 interviewer, remove entry for schedule@greenhouse
+
+if(guest.includes(",")){ //checks if more than one interviewer
+  //Logger.log(guests.length)
+  status = statuses.toString()
+}
+
+
+//Logger.log(mycal)
+var details=[[mycal, guest, status, intName[0], intName[1], focusArea, hiringManager, targetLevel, events[i].getStartTime(), events[i].getEndTime(), events[i].getDateCreated(), events[i].getCreators()]];
+var range=sheet.getRange(row,1,1,12);
+range.setValues(details);
+
+
+//var cell=sheet.getRange(row,3);
+//cell.setFormula('=(HOUR(F' +row+ ')+(MINUTE(F' +row+ ')/60))-(HOUR(E' +row+ ')+(MINUTE(E' +row+ ')/60))');
+//cell.setNumberFormat('.00');
+}
+}
+ Logger.log(count)
+
+ var range = sheet.getRange("A2:L");
+
+
+ range.sort([{column: 9, ascending: false}, {column: 2, ascending: false}, {column: 4, ascending: false}])
+
+}
+
+
+function onOpen() {
+ 
+
+}
