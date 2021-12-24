@@ -1,0 +1,95 @@
+function archive() {
+  var arrayOfRowsToArchive,data,i,lastColumn,L,numRows,range,rowsToDelete,
+      ss,sheet,sheetToMoveTheRowTo,startRow,status,targetSheet,thisRowsData;
+
+  //USER INPUT:
+
+  startRow = 4;
+
+  //END OF USER INPUT
+
+  ss = SpreadsheetApp.openById('1t9VUKlxHjrn6PkPEc2WTy5Z1VhhSneX2nw-9__hvLrM');
+  sheet = ss.getSheetByName("Sophie");
+  ss2 = SpreadsheetApp.openById('1RWGtppSAN_iulToHC0DDGIjilTKPqtgZSNoHIL8mWZE')
+  sheet2 = ss2.getSheetByName("Sophie");
+  sheetToMoveTheRowTo = "Auto-Archive";
+  numRows = sheet.getLastRow();
+  lastColumn = sheet.getLastColumn();
+
+  arrayOfRowsToArchive = [];
+  rowsToDelete = [];
+
+  data = sheet2.getRange(startRow, 1, numRows - startRow, lastColumn).getValues();//Get all values except the header rows
+
+L = data.length;
+
+Logger.log(data[1][3])
+
+
+
+var d = new Date();
+var currentTime = d.getTime();
+//var date1 = data[3][2]
+
+
+// pull time completed and convert from string to number in same format as the output of getTime function. parse string OR make nested if statements
+//Logger.log(data[3][6])
+//Logger.log(data[3][10])
+
+
+for (i=0; i < L; i++) { // for loop that iterates through all the rows using data.length. As long as current row is less than data length, or not your last row, it will keep counting up (ascending order)
+    status = data[i][3];
+    // Remember that we index from 0, and G is the 7th letter of the alphabet, which means (Column G) its index is 6 counting from 0
+  
+
+    
+    //Logger.log('status: ' + status);
+
+    if ((status === "Scheduled" && data[i][2]) || status === "Withdrew") { // we check to see if the request is marked as scheduled
+      timeStamp = data[i][2]; // then we pull the time stamp of only requests marked as scheduled
+      // Logger.log(timeStamp)
+      // Had to add an if statement to check if the interview date is read as Date type by the code
+      if(timeStamp instanceof Date){
+        // if Date, then we find its time and check if it needs to be archived
+        t = timeStamp.getTime();
+      }
+
+      if(status === "Withdrew"){
+        t = 0
+      }
+      
+      hours_since = (currentTime - t) / 3600000; // 360000 miliseconds 
+
+      
+
+      //Calculate time since completed
+      // add another if statement to check if it has been long enough to archive
+      if (hours_since > 168) {
+        thisRowsData = data[i];//Only get inner array of data
+        //Logger.log('thisRowsData: ' + thisRowsData)
+        arrayOfRowsToArchive.push(thisRowsData);//Push one row of data to outer array
+        rowsToDelete.push(i+startRow);//Get the row number to delete later
+      }
+      
+    }
+  }
+
+  targetSheet = ss.getSheetByName(sheetToMoveTheRowTo);
+
+  // If statement to make sure that there are rows to be archived
+
+  if (arrayOfRowsToArchive[0]) {
+      targetSheet.getRange(targetSheet.getLastRow()+1, 1, arrayOfRowsToArchive.length, arrayOfRowsToArchive[0].length)
+    .setValues(arrayOfRowsToArchive);
+  }
+
+
+  //Logger.log('rowsToDelete: ' + rowsToDelete)
+
+  for (i=rowsToDelete.length;i>0;i--) {//Delete from bottom up
+    Logger.log((i-1).toString())
+    Logger.log('rowsToDelete[i-1]: ' + rowsToDelete[i-1])
+    sheet.deleteRow(rowsToDelete[i-1]);
+    sheet2.deleteRow(rowsToDelete[i-1]);
+  }
+}
