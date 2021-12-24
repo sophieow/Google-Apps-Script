@@ -1,0 +1,55 @@
+function sendEmail() { //
+  
+
+
+  // Fetch the email address
+
+  // define variable targetsheet as the sheet you're using, then define email range off of that
+var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sophie")
+var emailRange = targetSheet.getRange("H:H");
+var candiRange = targetSheet.getRange("K:K");
+var checkRange = targetSheet.getRange("A:A");
+var eCheckRange = targetSheet.getRange("I:I");
+var emailList = emailRange.getValues();
+var candiList = candiRange.getValues();
+var checkList = checkRange.getValues();
+var eCheckList = eCheckRange.getValues();
+var intType = targetSheet.getRange("J:J").getValues();
+
+// Logger.log(checkList[4][0])
+Logger.log(emailList[4][0])
+
+// Send Alert Email.
+
+var L = checkList.length
+
+var subject = '[Automated Message] Scheduling Notification';
+
+// the way it works is that it has a column to track if the email has been sent
+// so it iterates over all the rows, then checks if the request is complete and the email has NOT been sent
+// if both conditions are satisfied, it sends an email and modifies the sheet itself to reflect that
+
+for (i=3; i < L; i++) {
+  if(checkList[i][0] && eCheckList[i].toString() !== "sent"){
+    var emailAddress = emailList[i][0]
+    var candName = candiList[i][0]
+    var interviewType = intType[i][0]
+    var message = `Your ${interviewType} request for ${candName} is completed.`; // Second column
+    // make the code to change value in column I to "sent" for this row
+    var modCell = 'I' + (Math.round(i+1)).toString(10);
+    targetSheet.getRange(modCell).setValue("sent")
+
+
+   MailApp.sendEmail(emailAddress, subject, message);
+  }
+
+}
+
+// Make sure your function has a way of knowing if it has already sent out an email notification!!!
+// Suggestion: add a new column to the sheet, use this function to modify that column when the email is sent
+
+
+
+
+
+}
