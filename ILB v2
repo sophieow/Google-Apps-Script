@@ -1,0 +1,526 @@
+/**
+ * @OnlyCurrentDoc
+ */
+//------------------------------------------------------------------------------------------------ 
+// global variables
+//------------------------------------------------------------------------------------------------ 
+var ss = SpreadsheetApp.getActiveSpreadsheet(); // plx trix user document
+var tab_name = 'plx_trix_config'; // this tab is required for document to execute queries
+// Define vars for all columns on tab_name tab
+var descriptionColumn;
+var row;
+var queryColumn;
+var destinationColumn;
+var incrementalColumn;
+var requestTypeColumn;
+var requestExecutionColumn;
+var parametersColumn;
+var queryEngineColumn;
+var startTimeColumn;
+var executionTimeColumn;
+var statusColumn;
+
+
+//------------------------------------------------------------------------------------------------ 
+// Creates a custom menu in the trix menu bar
+//------------------------------------------------------------------------------------------------
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('#plx Trix')
+      .addItem('Update Data', 'updateData')
+      .addSeparator()
+      .addItem('Help', 'help_function')
+      .addToUi();
+}
+
+function help_function(){
+   Browser.msgBox("HELP!!!!\\n\\nNew to #plx-trix? >> go/plx-trix\\n\\nOther questions >> plx-trix-users@google.com");
+  
+}
+
+//------------------------------------------------------------------------------------------------ 
+// Helper function to check if Config Tab exists
+//------------------------------------------------------------------------------------------------ 
+function checkConfigTab(tab_name) {
+  // Checks whether a tab exists that holds the plx-trix queries
+  // If no script with tab_name exists, imports it from
+  // plx-trix addon master trix doc via function importConfigTab
+  var activeSheet = ss.getActiveSheet();
+  
+  if (ss.getSheetByName(tab_name) != null){
+    return true;
+  } else {
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------------------------ 
+// MenuItem - Update Data
+//------------------------------------------------------------------------------------------------ 
+function updateData(){
+ var config_exists = checkConfigTab(tab_name);
+ 
+  
+ if (config_exists) {
+  runAllQueries();
+ } else {
+  Browser.msgBox("Something went wrong:   (╯°□°）╯︵ ┻━┻ \\n\\n Tab with name: " 
+                    + tab_name + " does not exist in this document!" +
+                 "\\n\\nIf this is document is not yet a #plx-trix, execute: 'Add-ons' >> 'plx-trix >> 'Make document a #plx-trix'" +
+                 "\\n If this is already a plx-trix, check your config tab name for typos." +
+                 "\\n\\nIf this message confuses you >> send a screenshot to plx-trix-users@google.com"); 
+ }
+}
+
+
+//------------------------------------------------------------------------------------------------ 
+// Main part of script - runQueryAll
+//------------------------------------------------------------------------------------------------ 
+function runAllQueries() {
+  var activeSheet = ss.getActiveSheet();
+  var reference = ss.getSheetByName(tab_name); // where to get the query infos from
+  var query_count = 0;
+  
+  //check data structure and find column numbers according to column name
+  try {
+    checkDataStructure(reference);
+  }
+  catch(error){
+    throw(error.message);
+  }
+  
+  
+  // Loop through the Queries on the config tab (var reference), starting from row 'row', stopping in the next blank row
+  while (query_count<100) {
+    // Values necessary for a query
+    var sql = reference.getRange(row, queryColumn).getValue(); // the query text
+    var dest_sheet = reference.getRange(row, destinationColumn).getValue(); // destination sheet for the resulting data
+    var incmt = reference.getRange(row, incrementalColumn).getValue(); // whether or not the data is incremental
+    var requestType = reference.getRange(row, requestTypeColumn).getValue();  //request type is sql text or script name
+    var requestExecution = reference.getRange(row, requestExecutionColumn).getValue();  //status is d or disabled
+    var parameters = reference.getRange(row, parametersColumn).getValue(); //get parameters, if any exist
+    var queryEngine = reference.getRange(row, queryEngineColumn).getValue(); //query engine is dremel, f1
+    
+    if(sql == '') {
+     break; 
+    }
+    
+    //set defaults
+    if(incmt == "") {
+      incmt = "No";
+      reference.getRange(row, incrementalColumn).setValue("No");
+    }
+    if(requestType == "") {
+      requestType = "query";
+      reference.getRange(row, requestTypeColumn).setValue("query");
+    }
+    if(requestExecution == "") {
+      requestExecution = "Enabled";
+      reference.getRange(row, requestExecutionColumn).setValue("Enabled");
+    }
+    if(requestType == "query" && queryEngine =="") {
+      queryEngine = "DREMEL";
+      reference.getRange(row, queryEngineColumn).setValue("DREMEL");
+    }
+    if(requestType == "script" && queryEngine !=="") {
+      Browser.msgBox("Engine cannot be chosen for scripts. Engine saved in script was used.");
+      queryEngine = "";
+      reference.getRange(row, queryEngineColumn).setValue("");
+    }
+    else if(requestType == "script" && queryEngine !=="") {
+      queryEngine = "";
+      reference.getRange(row, queryEngineColumn).setValue("");
+    }
+    //only execute query or script if set to enabled
+    if (requestExecution == "Enabled" && sql !== '') {
+      defaultstart = new Date(Date.now());
+      formattedDate = Utilities.formatDate(defaultstart, "GMT", "yyyy-MM-dd' 'HH:mm:ss' 'z");
+      reference.getRange(row, startTimeColumn).setValue(formattedDate);
+      
+      reference.getRange(row, executionTimeColumn).setValue(0);
+      reference.getRange(row, statusColumn).setValue("Failed");
+      
+      prepareData(sql,dest_sheet,incmt,reference,row, destinationColumn, requestType, parameters, queryEngine);
+      analytics('query',sql + parameters + queryEngine);
+      query_count += 1;
+    }
+    row += 1;
+  
+  }
+  ss.toast("Execution completed - Please see config tab for details","",5);
+  analytics('query_completed',query_count);
+  activeSheet.activate();
+}  
+
+
+//------------------------------------------------------------------------------------------------ 
+// Prework: check data frame structure and find column names
+//------------------------------------------------------------------------------------------------ 
+
+function checkDataStructure(reference) {
+  
+  row = 0;
+  queryColumn = 0;
+  destinationColumn = 0;
+  incrementalColumn = 0;
+  requestTypeColumn = 0;
+  requestExecutionColumn = 0;
+  parametersColumn = 0;
+  queryEngineColumn = 0;
+  startTimeColumn = 0;
+  executionTimeColumn = 0;
+  statusColumn = 0;
+
+  descriptionColumn = 2;
+  row;
+  //find first row with a query specified on ENGINE tab
+  for(i = 1; i < reference.getLastRow(); i++) {
+    if(reference.getRange(i, descriptionColumn).getValue() == 'Description') {
+      row = i+1;
+      break;
+    }
+  }
+  //find column index for specific columns
+  for(column = 1; column <= reference.getLastColumn(); column++) {
+    if(reference.getRange(row-1,column).getValue() == 'Query/Script') {
+      queryColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Destination Sheet') {
+      destinationColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Incremental') {
+      incrementalColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Request Type') {
+      requestTypeColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Request Execution') {
+      requestExecutionColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Parameters') {
+      parametersColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Query Engine') {
+      queryEngineColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Start Time') {
+      startTimeColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Execution Duration') {
+      executionTimeColumn = column;
+    }
+    else if(reference.getRange(row-1,column).getValue() == 'Status Last Execution') {
+      statusColumn = column;
+    }
+  }
+  var message = "Original columns need to exist. Order is irrelevant but all need to be written in one row. Following columns are missing: ";
+  
+  if(row == 0) {
+    message = message + "\nDescription";
+  }
+  if(queryColumn == 0){
+    message = message + "\nqueryColumn";
+  }
+  if(destinationColumn == 0) {
+    message = message + "\nDestination Sheet";
+  }
+  if(incrementalColumn == 0) {
+    message = message + "\nIncremental";
+  }
+  if(requestTypeColumn == 0) {
+    message = message + "\nRequest Type";
+  }
+  if(requestExecutionColumn == 0) {
+    message = message + "\nRequest Execution";
+  }
+  if(parametersColumn == 0) {
+    message = message + "\nParameters";
+  }
+  if(queryEngineColumn == 0) {
+    message = message + "\nQuery Engine";
+  }
+  if(startTimeColumn == 0) {
+    message = message + "\nStart Time";
+  }
+  if(executionTimeColumn == 0) {
+    message = message + "\nExecution Time";
+  }
+  if(statusColumn == 0) {
+    message = message + "\nStatus";
+  }
+  if(row == 0 || queryColumn == 0 || destinationColumn == 0 || incrementalColumn == 0 || requestTypeColumn == 0 || parametersColumn == 0 || queryEngineColumn == 0 || startTimeColumn == 0 || executionTimeColumn == 0 || statusColumn == 0) {
+   throw new Error(message) 
+  }
+}
+//------------------------------------------------------------------------------------------------ 
+// 1) Execute a single Query
+//------------------------------------------------------------------------------------------------ 
+function prepareData(sql,dest_sheet,incmt,reference,row, destinationColumn, requestType, parameters, queryEngine) {
+  // Step 1 a)
+  var sheet = check_destinationsheet(dest_sheet,reference,row, destinationColumn);
+  var inc = incmt;
+  
+  // Step 1 b) & c)
+  var projection = executeQuery_(sql, requestType, parameters, queryEngine, reference, row);
+  // Step 1 d)
+  try {
+    var data = Utilities.parseCsv(projection.data);
+    writeData_(projection,sheet,inc);
+    reference.getRange(row, statusColumn).setValue("Success");
+  } catch(error) {
+    throw(error.message);
+    ss.toast('Failed to write data'); 
+  }  
+}
+
+//------------------------------------------------------------------------------------------------
+// 1 a) check whether destination sheet exists
+//------------------------------------------------------------------------------------------------ 
+function check_destinationsheet(dest_sheet,reference,row, destinationColumn) {
+  // i) sheet not specified
+  if(dest_sheet == ''){
+    ss.insertSheet(ss.getNumSheets());
+    sheet = ss.getActiveSheet();
+    reference.getRange(row, destinationColumn).setValue(sheet.getSheetName()); 
+    ss.toast("Added sheet " + sheet.getSheetName() + " because sheet name was empty");
+    return sheet;
+  }
+  // ii) sheet with specified name does not exist
+  else if(ss.getSheetByName(dest_sheet) == null) {
+      ss.insertSheet(dest_sheet,ss.getNumSheets());
+      sheet = ss.getActiveSheet();
+      ss.toast("Added sheet " + sheet.getSheetName() + " because it did not exist");
+      return sheet;
+  }
+  else {
+    return ss.getSheetByName(dest_sheet);
+  }
+}
+
+//------------------------------------------------------------------------------------------------
+// 1 b) execute query
+//
+// Documentation: https://cs.corp.google.com/#piper///depot/google3/javascript/visualization/aplos/current/data/loader/apiaryprojectionserviceclient_test.js&l=22
+//------------------------------------------------------------------------------------------------
+function executeQuery_(sql, requestType, parameters, queryEngine, reference, row) {
+  
+    //create request properties
+    var request = {
+      queryRequest: {
+        query: {
+          text: sql,
+          engine: "DREMEL"
+        },
+        
+        script: {
+          
+        },
+        //add parameters, if any exist
+        //castedParameters
+        parameter: {
+          
+        },
+        
+        // disabling cached queries
+        cacheControl: {
+          minCacheTimestampMs: -1
+        }
+      }
+    };
+  
+  
+  //check whether input is sql code or script name
+  if(requestType == "script") {
+    delete request.queryRequest.query;
+    request["queryRequest"]["script"]["name"] = sql;
+  }
+  else {
+    delete request.queryRequest.script;
+    //adjust query engine if necessary
+    if(queryEngine !== "DREMEL") {
+      request["queryRequest"]["query"]["engine"] = queryEngine; 
+    }
+  }
+  
+  //check whether parameters exist and create code component
+  if(parameters !== '') {
+    var castedParameters = castParameters(parameters);
+    for(i = 0; i < castedParameters.length; i++) {
+      request["queryRequest"]["parameter"][castedParameters[i][0]] = castedParameters[i][1];
+    }
+  }
+  
+  var projection = Plx.Projections.create(request);
+  
+  
+  while (projection.state !== 'done') {
+    try {
+      Utilities.sleep(10000);
+      projection = getProjection_(projection);
+      
+      var startTime = new Date(parseInt(projection.executionStatistics.startTimeMs,10));
+      var endTime = new Date(parseInt(projection.executionStatistics.endTimeMs,10));
+      
+      reference.getRange(row, startTimeColumn).setValue(Utilities.formatDate(startTime, "GMT", "yyyy-MM-dd' 'HH:mm:ss' 'z"));
+      reference.getRange(row, executionTimeColumn).setValue((projection.executionStatistics.endTimeMs - projection.executionStatistics.startTimeMs)/1000);
+    }
+    catch(error) {
+      Logger.log(error);
+      throw(error.message);
+      return
+    }
+  }
+  
+  return projection;  
+}
+
+//------------------------------------------------------------------------------------------------
+// 1 c) get data
+//------------------------------------------------------------------------------------------------ 
+function getProjection_(projection) {
+  return Plx.Projections.get(projection.id, { token: projection.token });
+}
+
+//------------------------------------------------------------------------------------------------ 
+// 1 d) write data
+//------------------------------------------------------------------------------------------------  
+function writeData_(projection,sheet,inc) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  // data = returns a tabular 2D array representation of a CSV string.
+  var data = Utilities.parseCsv(projection.data);
+  // selecting the appropriate range in the destination sheet based on the size of the query output
+  var range = sheet.getRange(1, 1, data.length, data[0].length);
+  
+  // Check whether the query produced output (length counts the data header as 1)
+  if (data.length > 0) {
+    // This is not super sofisticated, but works
+    // If the incremental column says something other than yes, overwrite data.
+    //
+    // INCREMENTAL data
+    //
+    if (inc != "Yes") {
+        // Clear out the destination sheet
+        sheet.clearContents();
+        sheet.clearComments();
+        // Update data = write content of data into range
+        dataWriter(range,data);
+    //
+    // NON-INCREMENTAL
+    //
+    } else {
+        // find the last row of content in the destination sheet
+        var last_row = sheet.getLastRow()+1;
+        // update range to start one row after the content ends in destination sheet
+        range = sheet.getRange(last_row, 1, data.length, data[0].length);
+        // Update data = write content of data into range
+        dataWriter(range,data);
+        // Deleting the obsolete header row if there is already data in the sheet
+      if(last_row > 1){
+        sheet.deleteRow(last_row);
+      }  
+      }
+  } else {
+      ss.toast("No data - Query result was empty")
+    }  
+  
+}
+
+// Based on the data output 2D array (data), the selected range is used to write data
+function dataWriter(range, data) {
+  var length = data.length - 1
+  ss.toast("Writing " + length + " rows of data");
+  range.setValues(data)
+}
+
+//------------------------------------------------------------------------------------------------ 
+// 1 e) create parameter list
+//------------------------------------------------------------------------------------------------
+function castParameters(parameters) {
+  //array that contains the parameters by storing the key in the first column and the value 
+  //in the second column
+  var parameterArray=[];
+  
+  // Commenting the following section out as it prevented parameters from having spaces
+  
+    //delete spaces and replace = with :
+    //while(parameters.match(/([ ])/g) !== null) {
+    //  parameters = parameters.replace(' ', '');
+    //}
+  
+  // END OF COMMENT
+  
+  //split string with parameters into parts which are separated by comma
+  splitParameters = parameters.split("|");
+  //regex to find the = between key and value
+  var regex = /[=]/;
+  for (i = 0; i < splitParameters.length; i++) {
+    //execute above regex on a separated key-value-combination
+    var match = regex.exec(splitParameters[i]);
+    //save index where = is written
+    var index = match.index;
+    //separate key-value-combination into key and value with the help of the index
+    var key = splitParameters[i].substring(0, index);
+    var value = splitParameters[i].substring(index+1, splitParameters[i].length);
+    //push key and value in array
+    parameterArray.push([key,value]);
+  }
+  return parameterArray;
+}
+
+ 
+//------------------------------------------------------------------------------------------------ 
+// Analytics implementation
+//------------------------------------------------------------------------------------------------   
+function analytics(action, opt_arg)
+{
+   var property = 'UA-66715379-1';
+   var trix = SpreadsheetApp.getActive();
+   var id = trix.getId();
+   var user = '';
+   var hashfunction = function(str)
+   {
+      var hash = 0;
+      if (str.length == 0) return hash;
+      for (i = 0; i < str.length; i++)
+      {
+         char = str.charCodeAt(i);
+         hash = ((hash << 5) - hash) + char;
+         hash = hash & hash; // Convert to 32bit integer
+      }
+      return hash;
+   }
+   var userhash = hashfunction(user);
+   
+  Logger.log(opt_arg)
+   
+   if (action == 'query')
+   {
+      if (typeof opt_arg === 'undefined')
+      {
+         opt_arg = '--';
+      };
+      var url = "http://www.google-analytics.com/collect?v=1&ni=1&tid=" + property + "&cid=" + userhash + "&ec=query&cd1=" + user + "&cd2=" + id + "&t=pageview";
+      var max_l = 2000 - url.length;
+      opt_arg = escape(opt_arg);
+      //Shorten URL so it can be used with UrlFetch
+      if (String(opt_arg).length > max_l)
+         opt_arg = opt_arg.substring(0, max_l - 4) + '...';
+      url += "&dl=" + opt_arg
+   }
+   if (action == 'query_completed')
+   {
+      if (typeof opt_arg != 'number')
+      {
+         opt_arg = 1;
+      };
+      var url = "http://www.google-analytics.com/collect?v=1&ni=1&tid=" + property + "&cid=" + userhash + "&t=event&ec=query&ea=execution_complete&el=plxtrix&ev=" + opt_arg + "&cm1=" + opt_arg + "&cd1=" + user + "&cd2=" + id;
+   }
+   try
+   {
+      UrlFetchApp.fetch(url).getResponseCode();
+   }
+   catch (e)
+   {
+      Logger.log("Analytics tracking failed for " + url);
+   }
+} 
