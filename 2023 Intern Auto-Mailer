@@ -1,0 +1,228 @@
+// Google Apps Script code that will send an HTML email template named "[Midpoint 1]" one week before the midpoint in between the start and end dates of each row, an HTML email template named "[Midpoint 2]" two days before the midpoint in between the start and end dates of each row, an HTML email template named "[Midpoint 3]" when a cell value is added to Column Q, an HTML email template named "[Midpoint 4 Peer Reviewer 1]" when a cell value is added to Column R, an HTML email template named "[Final 1 Eligible]" three weeks before the end date of each row if Column O's cell value is before December 2024, an HTML email template named "[Final 1 Non-Eligible]" three weeks before the end date of each row if Column O's cell value is after December 2024, an HTML email template named "[Final 2 Action Items]" one week before the end date of each row, and an HTML email template named "[Final 3 Peer Reviewer 2]" if there is a cell value in Column S:
+
+function sendHostEmails() {
+  
+  // Load sheets
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Host Data');
+  var sheet2 = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Host Mailer');
+  var sheet3 = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('GH Scorecard');
+  
+  // row control
+  var startRow = 2; // skip header row
+  var numRows = sheet.getLastRow(); // total number of rows to process
+
+  // Load in html templates
+  var htmlBody1 = HtmlService.createTemplateFromFile('[Midpoint Host].html');
+  var htmlBody2 = HtmlService.createTemplateFromFile('[Midpoint Host Reminder].html');
+  var htmlBody3 = HtmlService.createTemplateFromFile('[Midpoint Next Steps].html');
+  var htmlBody4 = HtmlService.createTemplateFromFile('[Midpoint Peer Review].html');
+  var htmlBody5 = HtmlService.createTemplateFromFile('[Final Host Eligible].html');
+  var htmlBody6 = HtmlService.createTemplateFromFile('[Final Host Non-Eligible].html');
+  var htmlBody7 = HtmlService.createTemplateFromFile('[Final Week].html');
+  var htmlBody8 = HtmlService.createTemplateFromFile('[Final Peer Review].html');
+
+  // create now value to check against other dates
+  var now = new Date();
+
+  //Logger.log(now)
+  
+
+  // Begin looping over rows
+  for (var i = startRow; i <= numRows; i++) {
+    // load in data from row
+    var row = sheet.getRange(i, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var gHLink = sheet3.getRange(i,4,1,1).getValues()[0]
+    var email = row[5]; // email address in column F
+    var startDate = row[9]; // start date in column J
+    var endDate = row[10]; // end date in column K
+    //Logger.log(startDate)
+    var status = row[19]; // status in column Q
+    
+    // var feedback = row[17]; // feedback in column R
+    var host = row[3]
+    var firstname = row[1];
+    var lastname = row[2];
+    var dateBefore = new Date("December 31, 2024"); // date to check against in column O
+    var peerReview1 = row[16];
+    var peerReview2 = row[17];
+
+    // Create setstatus variable to modify status
+    var setstatus = status
+
+    // Pull html templates for modification
+    var email_html1 = htmlBody1.evaluate().getContent();
+    var email_html2 = htmlBody2.evaluate().getContent();
+    var email_html3 = htmlBody3.evaluate().getContent();
+    var email_html4 = htmlBody4.evaluate().getContent();
+    var email_html5 = htmlBody5.evaluate().getContent();
+    var email_html6 = htmlBody6.evaluate().getContent();
+    var email_html7 = htmlBody7.evaluate().getContent();
+    var email_html8 = htmlBody8.evaluate().getContent();
+  
+    // Check if start and end dates are correctly entered
+    if (startDate instanceof Date && endDate instanceof Date) {
+
+      // Create relevant dates for email actions
+      var midpointDate = new Date(startDate.getTime() + (endDate.getTime() - startDate.getTime()) / 2);
+      var oneWeekBeforeMidpointDate = new Date(midpointDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+      var twoDaysBeforeMidpointDate = new Date(midpointDate.getTime() - 2 * 24 * 60 * 60 * 1000);
+      var threeWeeksBeforeEndDate = new Date(endDate.getTime() - 21 * 24 * 60 * 60 * 1000);
+      var oneWeekBeforeEndDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // Check if it's time to send the intern midpoint evaluation email
+      if (oneWeekBeforeMidpointDate < now && status.indexOf("Sent [Midpoint Host]") == -1) {
+        var subject = "Intern Midpoint Evaluation";
+
+        // modify email html
+        email_html1 = email_html1.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+
+        // send emaikl
+        MailApp.sendEmail({
+          to: email,
+          subject: subject,
+          htmlBody: email_html1
+        });
+        
+        // Create new status value for host data sheet
+        setstatus = setstatus.concat("Sent [Midpoint Host]")
+
+        // Set new status value
+        sheet.getRange(i, 20).setValue(setstatus); // update status column
+        
+        // Log when email was sent to host in host mailer sheet
+        sheet2.getRange(i, 9).setValue(now)
+      }
+      
+      // Send additional reminder if midpoint feedback is not submitted more than 48 hours before deadline
+      if (twoDaysBeforeMidpointDate < now && status.indexOf("Sent [Midpoint Host]") !== -1 && !row[20] && status.indexOf("Sent [Midpoint Host Reminder]") == -1 && !row[18]) {
+        var subject = "Midpoint Reminder (48 hours)";
+
+        email_html2 = email_html2.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+        
+        MailApp.sendEmail({
+          to: email,
+          subject: subject,
+          htmlBody: email_html2
+        });
+        
+        setstatus = setstatus.concat("\n","Sent [Midpoint Host Reminder]")
+        sheet.getRange(i, 20).setValue(setstatus); // update status
+        sheet2.getRange(i, 10).setValue(now)
+      }
+
+      // Check if it is time to send final eval reminders
+      if (endDate < dateBefore && threeWeeksBeforeEndDate < now ) {
+        // Chekc if final 1 email has been sent
+        if(!status.includes('Sent [Final Host')){
+          // Check whether or not intern is conversion-elligible or not and send appropriate email
+          if (row[14] > dateBefore) {
+            // non-elligible
+            var subject = "Reminder: Intern Final Evaluation";
+          
+            email_html6 = email_html6.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+          
+            MailApp.sendEmail({
+              to: email,
+              subject: subject,
+              htmlBody: email_html6
+            });
+
+            setstatus = setstatus.concat("\n", "Sent [Final Host Non-Eligible]")
+          
+            sheet.getRange(i, 20).setValue(setstatus); // update status column
+            sheet2.getRange(i, 14).setValue(now)
+
+
+          } else {
+            //elligible
+            var subject = "Reminder: Intern Final Evaluation";
+
+            email_html5 = email_html5.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+          
+            MailApp.sendEmail({
+              to: email,
+              subject: subject,
+              htmlBody: email_html5
+            });
+          
+            setstatus = setstatus.concat("\n", "Sent [Final Host Eligible]")
+            sheet.getRange(i, 20).setValue(setstatus); // update status column
+            sheet2.getRange(i, 13).setValue(now)
+           
+          }
+        }
+
+
+      }
+
+      if (row[17] !== "" && row[17] !== "N/A" && status.indexOf("Sent [Final Peer Review]") == -1) {
+        var subject = "Reminder: Peer Reviewer 2 approaching";
+        var peerReview2Email = row[16] + "@google.com";
+            
+        email_html8 = email_html8.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+        
+        MailApp.sendEmail({
+          to: peerReview2Email, // email address in column S
+          subject: subject,
+          htmlBody: email_html8
+        });
+
+        setstatus = setstatus.concat("\n", "Sent [Final Peer Review]")
+        sheet.getRange(i, 20).setValue(setstatus); // update status column
+        sheet2.getRange(i, 16).setValue(now)
+      }
+      
+      // Send out final week action items email
+      if (oneWeekBeforeEndDate < now && status.indexOf("Sent [Final Week]") == -1) {
+        var subject = "Final Action Items";
+        
+        email_html7 = email_html7.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+
+        MailApp.sendEmail({
+          to: email,
+          subject: subject,
+          htmlBody: email_html7
+        });
+
+        setstatus = setstatus.concat("\n", "Sent [Final Week]")
+        
+        sheet.getRange(i, 20).setValue(setstatus); // update status column
+        sheet2.getRange(i, 15).setValue(now)
+      }
+
+      
+      // Send midpoint peer review request to peer reviewer 1
+      if(row[16] !== "" && status.indexOf("Sent [Midpoint Peer Review]") == -1) {
+        var subject = "Peer Reviewer 1 Reminder";
+        var peerReview1Email = row[16] + "@google.com";
+
+        email_html4 = email_html4.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+
+        MailApp.sendEmail({
+          to: peerReview1Email,
+          subject: subject,
+          htmlBody: email_html4
+        });
+        setstatus = setstatus.concat("\n","Sent [Midpoint Peer Review]")
+        sheet.getRange(i, 20).setValue(setstatus); // update status column
+        sheet2.getRange(i, 11).setValue(now)
+      } 
+
+      // Send reminder to setup meeting when feedback is received
+      if(row[18] && status.indexOf("Sent [Midpoint Next Steps]") == -1) {
+        var subject = "Midpoint Review Next Steps";
+
+        email_html3 = email_html3.replace('{{EndDate}}', endDate).replace('{{FirstName}}',firstname).replace('{{LastName}}', lastname).replace('{{midpointDate}}', midpointDate).replace('{{GreenhouseLink}}', gHLink).replace('{{HostName}}', host.split(' ')[0])
+
+        MailApp.sendEmail({
+          to: email,
+          subject: subject,
+          htmlBody: email_html3
+        });
+        setstatus = setstatus.concat("\n","Sent [Midpoint Next Steps]")
+        sheet.getRange(i, 20).setValue(setstatus); // update status column
+        sheet2.getRange(i, 12).setValue(now)
+      }     
+    }
+  }
+}
