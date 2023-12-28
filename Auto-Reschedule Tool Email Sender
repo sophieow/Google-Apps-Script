@@ -1,0 +1,65 @@
+// Every minute it checks the calendar. If an event has been declined, it then checks if that event is within a certain amount of hours, so if the event is declined on short notice, it notifies the candidate whose email is in the subject line. It triggers an auto-send email informing them of the cancellation. It takes the interview event ID and moves it to a list of interview cancellations have already been sent out. For all future notifications, it makes sure it hasn't already sent one out by comparing two arrays. 
+
+function sendEmail() { //
+  
+
+
+  // Fetch the email address
+
+  // define variable targetsheet as the sheet you're using, then define email range off of that
+var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1")
+var targetSheet2 = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sent Candidate Cancellations")
+
+var currentTime = Date.now()
+var interviewType = targetSheet.getRange("D:D").getValues();
+var confirmationStatus = targetSheet.getRange("C:C").getValues();
+var candiEmail = targetSheet.getRange("F:F").getValues();
+var eventStart = targetSheet.getRange("J:J").getValues();
+var eventOwner = targetSheet.getRange("M:M").getValues();
+var candiName = targetSheet.getRange("E:E").getValues();
+var eventIDs = targetSheet.getRange("N:N").getValues()
+const arrayColumn = (arr, n) => arr.map(x => x[n]);
+var sentEventIDs = arrayColumn(targetSheet2.getRange("F:F").getValues(),0);
+
+
+var subject = "[Notification] Your candidate's interview has been canceled";
+var subject2 = "Your Waymo interview has been canceled"
+
+var modRow = targetSheet2.getLastRow() + 1
+
+for(a=4; a < 200; a++){
+  //Logger.log(candiEmail[a][0])
+  var date = new Date(eventStart[a][0])
+  
+
+
+  if (confirmationStatus[a][0] === "NO" && date - currentTime < 28800000 && !sentEventIDs.includes(eventIDs[a][0])){
+    var emailAddressRC = eventOwner[a][0]
+    var message1 = `Hello, this is an automated message informing you that your interview for candidate: ${candiName} has been automatically canceled due to the interviewer declining the calendar event at least 8 hours before the event start.`;
+
+    var emailAddressCandi = candiEmail[a][0]
+    var message2 = `Hello, this is to inform you that your Waymo interview has been canceled due to unforeseen circumstances. Please contact waymo-recruiting-help@google.com to reschedule your interview.`
+    Logger.log(emailAddressCandi)
+    //MailApp.sendEmail(emailAddressRC, subject1, message1)
+    MailApp.sendEmail(emailAddressCandi, subject2, message2)
+
+    var pRange = targetSheet2.getRange(modRow,1,1,6)
+    var details = [[eventOwner[a][0], interviewType[a][0], candiName[a][0], candiEmail[a][0], eventStart[a][0], eventIDs[a][0]]]
+    pRange.setValues(details)
+    modRow = modRow++
+
+
+
+
+   }
+
+}
+
+// Make sure your function has a way of knowing if it has already sent out an email notification!!!
+// Suggestion: add a new column to the sheet, use this function to modify that column when the email is sent
+
+
+
+
+
+}
