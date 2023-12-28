@@ -1,0 +1,134 @@
+//[Midpoint Host]
+
+<p><span style="font-weight: 400;">Hi </span>{{HostName}},</p>
+<p>&nbsp;</p>
+<p><strong>{{FirstName}}</strong> <strong>{{LastName}}</strong><span style="font-weight: 400;">'s end date is </span><strong>{{EndDate}}</strong><span style="font-weight: 400;"> which means the internship is about halfway over! Please review the midpoint process &amp; action items at </span><a href="http://go/internmidpoint"><span style="font-weight: 400;">go/internmidpoint</span></a><span style="font-weight: 400;">.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">[Action]</span><span style="font-weight: 400;"> Please complete this feedback by </span><span style="background-color: #ffff00;"><strong>{{midpointDate}}</strong></span><span style="font-weight: 400;"> &amp; identify at least 1 Peer Reviewer for additional feedback by submitting</span><a href="https://docs.google.com/forms/d/1RHkBwO_OPC7_lYSli6-wA0dEeN5AOL5QrwIdQZLfoJU/edit?usp=drive_web"> <span style="font-weight: 400;">this form</span></a><span style="font-weight: 400;">.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">This feedback is essential for intern development and important as a halfway check-in on their progress. After completing the form, please meet with your intern to discuss the feedback and their progress on the project later in the week. Please note, the feedback you submit is not visible to the intern.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Let me know if you have any questions!</span><span style="font-weight: 400;"><br /><br /></span></p>
+<p><span style="font-weight: 400;">Thanks,</span><span style="font-weight: 400;"><br /></span><span style="font-weight: 400;">Intern Program Team</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">ACTION ITEM:</span> <strong>{{GreenhouseLink}}</strong></p>
+
+//[Midpoint Host Reminder]
+
+<p><span style="font-weight: 400;">Hi {{HostName}},</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Your intern&rsquo;s midpoint feedback is due in 48 hours. This is a reminder to fill out their {{FirstName}} 's scorecard in Greenhouse before their end date on {{EndDate}}. The scorecard should already be assigned to you under 2022 Intern Evaluation.&nbsp;&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Secondly, if you haven&rsquo;t already, please submit </span><a href="https://docs.google.com/forms/d/1RHkBwO_OPC7_lYSli6-wA0dEeN5AOL5QrwIdQZLfoJU/edit?usp=drive_web"><span style="font-weight: 400;">this form</span></a><span style="font-weight: 400;"> to nominate a Peer Reviewer.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">[Action]</span><span style="font-weight: 400;"> Please complete this feedback by [DUE DATE] &amp; identify at least 1 Peer Reviewer for additional feedback by submitting</span><a href="https://docs.google.com/forms/d/1RHkBwO_OPC7_lYSli6-wA0dEeN5AOL5QrwIdQZLfoJU/edit?usp=drive_web"> <span style="font-weight: 400;">this form</span></a><span style="font-weight: 400;">.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">This feedback is essential for intern development and important as a halfway check-in on their progress. After completing the form, please meet with your intern to discuss the feedback and their progress on the project later in the week. Please note, the feedback you submit is not visible to the intern.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">You can review the midpoint process &amp; action items at </span><a href="http://go/internmidpoint"><span style="font-weight: 400;">go/internmidpoint</span></a><span style="font-weight: 400;">.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Let me know if you have any questions!</span><span style="font-weight: 400;"><br /><br /></span></p>
+<p><span style="font-weight: 400;">Thanks,</span><span style="font-weight: 400;"><br /></span><span style="font-weight: 400;">Intern Program Team</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">ACTION ITEM:</span><span style="font-weight: 400;"> {{GreenhouseLink}}</span></p>
+
+
+//[Midpoint Next Steps]
+
+<p><span style="font-weight: 400;">Hi {{HostName}},</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thank you for submitting the midpoint evaluation for {{FirstName}} {{LastName}}. Please set up time to discuss the feedback with your intern and share any key areas of development. </span><strong>Once you have scheduled the meeting, please </strong><a href="https://docs.google.com/forms/d/e/1FAIpQLSeC81xZQHkVFBzDi42W4C-l1SVy-uCDhmJPoLVSBrXcbRX5JQ/viewform?usp=sf_link"><strong>SUBMIT THIS FORM</strong></a> <strong>with your meeting date so I schedule a midpoint check-in with you and your intern within the following week. </strong><span style="font-weight: 400;">If you are unable to schedule your developmental convo for any reason, please let our team know how we can assist.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><strong>Note: </strong><span style="font-weight: 400;">Don&rsquo;t forget to check in with your peer reviewers about their feedback before you meet with your intern.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">If you are interested in potentially converting your intern, please discuss headcount with your team manager. The conversion process should begin about one month before your intern&rsquo;s end date. More details on conversion can be found </span><a href="https://sites.google.com/corp/google.com/waymo-intern-portal/offboarding/intern-conversion-process?authuser=0"><span style="font-weight: 400;">here</span></a><span style="font-weight: 400;">.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">For more guidance, please reference </span><a href="https://docs.google.com/document/d/1Jnenedw11cIUF-oIbL7wC24OsdKc7ok9KMeB7nR0uMc/edit?resourcekey=0-0eKQ62AX2CUvhJtZMezCYQ"><span style="font-weight: 400;">this</span></a><span style="font-weight: 400;"> document.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thanks,</span></p>
+<p><span style="font-weight: 400;">Intern Program Team</span></p>
+
+//[Midpoint Peer Review]
+
+<p><span style="font-weight: 400;">Hello Peer Reviewer 1,</span>&nbsp;</p>
+<p><span style="font-weight: 400;">{{HostName}} has selected you as a peer reviewer for {{FirstName}} {{LastName}}.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">[Action]</span><span style="font-weight: 400;">: Please complete this feedback by {{midpointDate}}.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Please note the feedback you submit is not visible to the intern.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Let me know if you have any questions!</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thanks,</span></p>
+<p><span style="font-weight: 400;">Intern Program Team</span></p>
+<p><br /><span style="font-weight: 400;">ACTION ITEM:</span><span style="font-weight: 400;"> {{GreenhouseLink}}</span></p>
+
+
+//[Final Host Eligible]]
+
+<p><span style="font-weight: 400;">Hi {{HostName}},</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">You are receiving this email because your intern's end date is coming up in 3 weeks on {{EndDate}}.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">It is time to start thinking about conversion. If you would like to consider your intern for conversion, please let me know by responding to this email. An overview of the conversion process can be found </span><a href="https://docs.google.com/document/d/1FS_dO3vk0_V0osq52dX1jMSIxSc_vYLL7SjxlRqfpE0/edit#"><span style="font-weight: 400;">here</span></a><span style="font-weight: 400;">. Please note that you must complete final feedback regardless of conversion. If you will </span><strong>not</strong><span style="font-weight: 400;"> be considering your intern for conversion, please still complete final feedback by the specified deadline.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;"><span style="background-color: #ffff00;"><strong>[Action]:</strong></span>&nbsp; </span><span style="font-weight: 400;">1) Please complete the final feedback via this GH link here </span><span style="font-weight: 400;">by {{EndDate}}. Submitting feedback on time is critical to the timing of conversion offers and ensuring the best candidate experience so please ensure responses are inputted by this deadline.&nbsp; 2) Please schedule your final developmental conversation to take place during your intern's last week. Guidance on final evaluations and developmental conversations can be found at </span><a href="https://docs.google.com/document/d/1ytPb6c2qBqLnvbtH09RWfs5NX-6pHP9-QjMhqGTe5ig/edit?resourcekey=0-1mwC3b7Nkc79zxmoXclBZg"><span style="font-weight: 400;">go/internfinal</span></a><span style="font-weight: 400;"> 3) </span><span style="font-weight: 400;">Submit </span><a href="https://docs.google.com/forms/d/1ukhqRhF1rYuOtFwlDL97T60sRUo_F6B0kC0wGmqIbOU/edit#responses"><span style="font-weight: 400;">this form</span></a><span style="font-weight: 400;"> with the LDAP of your 2nd Peer Reviewer.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">During the midpoint evaluation you identified ldap@ to be a peer reviewer. Please let me know who the second peer reviewer should be.</span></p>
+<p><em><span style="font-weight: 400;">Please note peer reviewers should not be the Team Manager as they fill out separate feedback.</span></em></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Also, a friendly reminder for you and the team to attend the intern&rsquo;s final presentation. I have created a calendar invite that you can modify and add the rest of the team to - please let me know if you don't see that invitation.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">If you have any questions, please let me know.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thanks,</span><span style="font-weight: 400;"><br /></span><span style="font-weight: 400;">Intern Program Team</span></p>
+<p><span style="font-weight: 400; color: #ff0000;">ACTION ITEM:</span><span style="font-weight: 400;"> {{GreenhouseLink}}</span></p>
+
+//[Final Host Non-Eligible]
+
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Hi {{HostName}},</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">You are receiving this email because your intern's end date is coming up on </span><strong>{{EndDate}}</strong></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Since your intern is not eligible for conversion given their graduation date, you will simply need to complete final feedback.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><strong><span style="background-color: #ffff00;">[Action]:</span> </strong><span style="font-weight: 400;">&nbsp;</span><span style="font-weight: 400;">Please complete the final feedback via this GH link here </span><span style="font-weight: 400;">by {{EndDate}}. Submit </span><a href="https://docs.google.com/forms/d/e/1FAIpQLSdTSE2vZlmwPHAn456Nfka6vMOIvQyaiS6nQSIUZaIJ4qGEQA/viewform?usp=sf_link"><span style="font-weight: 400;">this form</span></a><span style="font-weight: 400;"> with the LDAP of your 2nd Peer Reviewer.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">During the midpoint evaluation you identified ldap@ to be a peer reviewer. Please let me know who the second peer reviewer should be.&nbsp; </span><em><span style="font-weight: 400;">Please note peer reviewers should not be the Team Manager as they fill out separate feedback.</span></em></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Also, a friendly reminder for you and the team to attend the intern&rsquo;s final presentation. I have created a calendar invite that you can modify and add the rest of the team to - please let me know if you don't see that invitation.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">If you have any questions, please let me know.</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thanks,</span><span style="font-weight: 400;"><br /></span><span style="font-weight: 400;">Intern Program Team</span></p>
+<p><br /><span style="color: #ff0000;"><strong>ACTION ITEM:</strong> </span><span style="font-weight: 400;">{{GreenhouseLink}}</span></p>
+
+
+//[Final Week]
+
+<p><span style="font-weight: 400;">{{HostName}} has selected you as a peer reviewer for {{FirstName}} {{LastName}}&rsquo;s Final Evaluation.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="color: #ff0000;"><strong>[Action]</strong></span><span style="font-weight: 400;"><span style="color: #ff0000;"><strong>:</strong></span> Please complete this feedback by {{EndDate}}. Submitting feedback on time is critical to the timing of conversion offers and ensuring the best candidate experience so please ensure responses are inputted by this deadline.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Please note the feedback you submit may be used to make hiring decisions so please be as detailed and thorough as possible!&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Let me know if you have any questions!</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thanks,</span></p>
+<p><span style="font-weight: 400;">Intern Program Team</span></p>
+
+
+//[[Final Peer Review]]
+
+<p><span style="font-weight: 400;">{{HostName}} has selected you as a peer reviewer for {{FirstName}} {{LastName}}&rsquo;s Final Evaluation.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="color: #ff0000;"><strong>[Action]</strong></span><span style="font-weight: 400;"><span style="color: #ff0000;"><strong>:</strong></span> Please complete this feedback by {{EndDate}}. Submitting feedback on time is critical to the timing of conversion offers and ensuring the best candidate experience so please ensure responses are inputted by this deadline.&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Please note the feedback you submit may be used to make hiring decisions so please be as detailed and thorough as possible!&nbsp;</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Let me know if you have any questions!</span></p>
+<p>&nbsp;</p>
+<p><span style="font-weight: 400;">Thanks,</span></p>
+<p><span style="font-weight: 400;">Intern Program Team</span></p>
+
