@@ -1,0 +1,149 @@
+function export_gcal_to_gsheet(){
+ 
+ 
+ var calList = ['c_cdb6e7e394f84f17695260f694c4834a334a83b579d3a80101ecc0ca0723ad5d@group.calendar.google.com'];
+var sheet = SpreadsheetApp.getActiveSheet();
+
+sheet.getRange(1,1,1000,14).clearContent()
+
+
+
+var calIDList = ["Sophie"];
+
+var count = 0
+
+for (var k=0;k<calList.length;k++){
+
+var cal = CalendarApp.getCalendarById(calList[k]);
+var mycal = calIDList[k]
+
+// Change the end date to include the next three months for RC calendars.
+var events = cal.getEvents(new Date("December 1, 2021 00:00:00 PST"), new Date("December 1, 2022 23:59:59 PST"), {search: '-project123'});
+
+
+// Create a header record on the current spreadsheet in cells A1:N1 - Match the number of entries in the "header=" to the last parameter
+// of the getRange entry below
+var header = [["SWE Calendar", "Interviewer", "Confirmation Status", "Interview Type", "Candidate", "Candidate Email", "Focus Areas", "Hiring Manager", "Target Level", "Event Start", "Event End", "Event Creation", "Created By", "Event ID"]]
+var range = sheet.getRange(1,1,1,14);
+range.setValues(header);
+
+
+var b_count = count
+
+Logger.log(count)
+
+// Loop through all calendar events found and write them out starting on calulated ROW 2 (i+2)
+for (var n=b_count;n<b_count + events.length;n++) {
+var row=n+2;
+
+var count = n
+
+var i = n - b_count
+
+var myformula_placeholder = '';
+
+var dtext = events[i].getDescription()
+var description = events[i].getDescription().split("\n")
+if (description.length < 2){
+  description = events[i].getDescription().split("<br>")
+}
+var focusArea = ''
+var hiringManager = ''
+var targetLevel = ''
+
+
+for (var j = 0; j<description.length;j++) { 
+  if (description[j].includes('Focus Area:')) {
+    focusArea += description[j].split(':')[1].split("</b>")[0]
+  }
+  if (description[j].includes('Hiring Manager:')) {
+    hiringManager += description[j].split(':')[1]
+  }
+  if (description[j].includes('Target Level:')) { 
+    targetLevel += description[j].split(':')[1].split("<")[0].split("*")[0]
+    
+  }
+
+}
+
+
+var intName = events[i].getTitle().split("with")
+if (intName.length < 2){
+  intName = events[i].getTitle().split("for")
+  if (intName.length < 2){
+    intName = events[i].getTitle().split("-")
+  }
+}
+
+var candName = "test"
+
+if(intName[1]){
+  candInfo = intName[1].split(' // ')
+  candName = candInfo[0]
+}
+
+var candiEmail = "test"
+
+if(candInfo.length > 1){
+  candiEmail = candInfo[1]
+}
+
+var guestList = events[i].getGuestList(includeOwner = true);
+//Logger.log(guestList[1].getName())
+var guests = []
+var guest = ''
+var guestEmail = [];
+var statuses = [];
+var status = ''
+
+
+if (guestList != null){
+for(var d=0; guestList!=null && d<guestList.length; d++){
+  if(guestList[d].getName!=null){
+  guests = guests.concat([guestList[d].getName()]) 
+  statuses = statuses.concat([guestList[d].getGuestStatus()])
+
+}
+}
+}
+
+var guest = guests.toString().split('US')[0]
+//Logger.log(guest.indexOf(','))
+if (guest.indexOf(',') === 0){ 
+
+  guest = guest.substring(1) 
+}
+var guestEmail = guestEmail.toString()
+var status = statuses
+
+if(guest.includes(",")){ 
+  status = statuses.toString()
+}
+
+
+
+//Logger.log(mycal)
+var details=[[mycal, guest, status, intName[0], candName, candiEmail,  focusArea, hiringManager, targetLevel, events[i].getStartTime(), events[i].getEndTime(), events[i].getDateCreated(), events[i].getCreators(), events[i].getId()]];
+var range=sheet.getRange(row,1,1,14);
+range.setValues(details);
+
+
+//var cell=sheet.getRange(row,3);
+//cell.setFormula('=(HOUR(F' +row+ ')+(MINUTE(F' +row+ ')/60))-(HOUR(E' +row+ ')+(MINUTE(E' +row+ ')/60))');
+//cell.setNumberFormat('.00');
+}
+}
+ Logger.log(count)
+
+ var range = sheet.getRange("A2:L");
+
+
+ range.sort([{column: 9, ascending: false}, {column: 2, ascending: false}, {column: 4, ascending: false}])
+
+}
+
+
+function onOpen() {
+ 
+
+}
